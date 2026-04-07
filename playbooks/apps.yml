@@ -13,7 +13,6 @@
         - portainer
         - vaultwarden
         - caddy
-        - paperless
 
     - name: Copy compose files
       copy:
@@ -23,7 +22,6 @@
         - portainer
         - vaultwarden
         - caddy
-        - paperless
 
     - name: Start Portainer
       community.docker.docker_compose_v2:
@@ -38,9 +36,4 @@
     - name: Start Caddy
       community.docker.docker_compose_v2:
         project_src: /opt/stacks/caddy
-        state: present
-
-    - name: Start Paperless
-      community.docker.docker_compose_v2:
-        project_src: /opt/stacks/paperless
         state: present
