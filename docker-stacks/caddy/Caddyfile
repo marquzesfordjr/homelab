@@ -9,3 +9,7 @@ vaultwarden.local {
 portainer.local {
   reverse_proxy localhost:9000
 }
+
+paperless.local {
+  reverse_proxy 192.168.137.102:8000
+}
