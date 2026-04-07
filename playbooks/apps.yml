@@ -1,0 +1,39 @@
+---
+- name: Deploy apps
+  hosts: apps
+  become: true
+
+  tasks:
+    - name: Create app directories
+      file:
+        path: /opt/stacks/{{ item }}
+        state: directory
+        mode: '0755'
+      loop:
+        - portainer
+        - vaultwarden
+        - caddy
+
+    - name: Copy compose files
+      copy:
+        src: ../docker-stacks/{{ item }}/
+        dest: /opt/stacks/{{ item }}/
+      loop:
+        - portainer
+        - vaultwarden
+        - caddy
+
+    - name: Start Portainer
+      community.docker.docker_compose_v2:
+        project_src: /opt/stacks/portainer
+        state: present
+
+    - name: Start Vaultwarden
+      community.docker.docker_compose_v2:
+        project_src: /opt/stacks/vaultwarden
+        state: present
+
+    - name: Start Caddy
+      community.docker.docker_compose_v2:
+        project_src: /opt/stacks/caddy
+        state: present

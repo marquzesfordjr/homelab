@@ -1,0 +1,11 @@
+{
+  local_certs
+}
+
+vaultwarden.local {
+  reverse_proxy localhost:8080
+}
+
+portainer.local {
+  reverse_proxy localhost:9000
+}
