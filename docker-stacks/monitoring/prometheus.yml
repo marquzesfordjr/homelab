@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'ops-01'
+    static_configs:
+      - targets: ['192.168.137.101:9100']
+
+  - job_name: 'app-01'
+    static_configs:
+      - targets: ['192.168.137.102:9100']
+
+  - job_name: 'rpi-01'
+    static_configs:
+      - targets: ['192.168.137.50:9100']

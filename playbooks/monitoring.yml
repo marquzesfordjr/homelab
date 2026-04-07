@@ -1,0 +1,38 @@
+---
+- name: Deploy monitoring stack
+  hosts: monitoring
+  become: true
+
+  tasks:
+    - name: Create monitoring directory
+      file:
+        path: /opt/stacks/monitoring
+        state: directory
+        mode: '0755'
+
+    - name: Copy monitoring compose files
+      copy:
+        src: ../docker-stacks/monitoring/
+        dest: /opt/stacks/monitoring/
+
+    - name: Start monitoring stack
+      community.docker.docker_compose_v2:
+        project_src: /opt/stacks/monitoring
+        state: present
+
+- name: Install node exporter on all hosts
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install node exporter
+      apt:
+        name: prometheus-node-exporter
+        state: present
+        update_cache: yes
+
+    - name: Enable and start node exporter
+      service:
+        name: prometheus-node-exporter
+        state: started
+        enabled: yes
