@@ -9,3 +9,4 @@ Ansible-managed homelab running on Proxmox.
 
 ## Quick start
 ansible-playbook playbooks/bootstrap.yml
+# test
