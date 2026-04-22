@@ -1,0 +1,67 @@
+---
+- name: Deploy OpenCanary
+  hosts: opencanary
+  become: true
+  tasks:
+    - name: Create opencanary config directory
+      file:
+        path: /opt/opencanary/config
+        state: directory
+
+    - name: Deploy opencanary config
+      copy:
+        dest: /opt/opencanary/config/opencanary.conf
+        content: |
+          {
+              "device.node_id": "opencanary-homelab",
+              "logger": {
+                  "class": "PyLogger",
+                  "kwargs": {
+                      "formatters": {
+                          "plain": {
+                              "format": "%(message)s"
+                          }
+                      },
+                      "handlers": {
+                          "console": {
+                              "class": "logging.StreamHandler",
+                              "stream": "ext://sys.stdout"
+                          }
+                      }
+                  }
+              },
+              "ftp.enabled": true,
+              "ftp.port": 21,
+              "http.enabled": true,
+              "http.port": 8880,
+              "http.banner": "Apache/2.2.22 (Ubuntu)",
+              "ssh.enabled": true,
+              "ssh.port": 2222,
+              "telnet.enabled": true,
+              "telnet.port": 2323,
+              "smb.enabled": false
+          }
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/opencanary/docker-compose.yml
+        content: |
+          services:
+            opencanary:
+              image: chrisjbawden/opencanary-ui:latest
+              container_name: opencanary
+              restart: unless-stopped
+              network_mode: host
+              cap_add:
+                - NET_ADMIN
+                - NET_RAW
+              environment:
+                - MA_PORT=8501
+                - TZ=America/New_York
+              volumes:
+                - /opt/opencanary/config:/etc/opencanaryd
+
+    - name: Start opencanary
+      shell: docker compose up -d
+      args:
+        chdir: /opt/opencanary

@@ -1,0 +1,69 @@
+---
+- name: Install and configure SNMP
+  hosts: proxmox:pi
+  become: true
+  tasks:
+    - name: Install snmpd
+      apt:
+        name: snmpd
+        state: present
+        update_cache: yes
+
+    - name: Configure snmpd
+      copy:
+        dest: /etc/snmp/snmpd.conf
+        content: |
+          agentAddress udp:161
+          view systemonly included .1.3.6.1.2.1.1
+          view systemonly included .1.3.6.1.2.1.25.1
+          rocommunity public default
+          rocommunity6 public default
+          rouser authPrivUser authpriv -V systemonly
+          sysLocation Homelab
+          sysContact admin@homelab
+          sysServices 72
+          proc mountd
+          proc ntpd
+          proc smartd
+          disk / 10000
+          load 12 10 5
+
+    - name: Restart snmpd
+      systemd:
+        name: snmpd
+        enabled: yes
+        state: restarted
+- name: Install and configure SNMP
+  hosts: proxmox:pi
+  become: true
+  tasks:
+    - name: Install snmpd
+      apt:
+        name: snmpd
+        state: present
+        update_cache: yes
+
+    - name: Configure snmpd
+      copy:
+        dest: /etc/snmp/snmpd.conf
+        content: |
+          agentAddress udp:161
+          view systemonly included .1.3.6.1.2.1.1
+          view systemonly included .1.3.6.1.2.1.25.1
+          rocommunity public default
+          rocommunity6 public default
+          rouser authPrivUser authpriv -V systemonly
+          sysLocation Homelab
+          sysContact admin@homelab
+          sysServices 72
+          proc mountd
+          proc ntpd
+          proc smartd
+          disk / 10000
+          load 12 10 5
+
+    - name: Restart snmpd
+      systemd:
+        name: snmpd
+        enabled: yes
+        state: restarted

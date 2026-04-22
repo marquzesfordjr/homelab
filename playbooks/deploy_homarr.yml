@@ -1,0 +1,35 @@
+---
+- name: Deploy Homarr
+  hosts: homarr
+  become: true
+  tasks:
+    - name: Create homarr directory
+      file:
+        path: /opt/homarr/configs
+        state: directory
+
+    - name: Create homarr icons directory
+      file:
+        path: /opt/homarr/icons
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/homarr/docker-compose.yml
+        content: |
+          services:
+            homarr:
+              image: ghcr.io/ajnart/homarr:latest
+              container_name: homarr
+              restart: unless-stopped
+              ports:
+                - 7575:7575
+              volumes:
+                - /opt/homarr/configs:/app/data/configs
+                - /opt/homarr/icons:/app/public/icons
+                - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    - name: Start homarr
+      shell: docker compose up -d
+      args:
+        chdir: /opt/homarr

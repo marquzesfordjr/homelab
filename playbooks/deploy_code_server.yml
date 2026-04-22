@@ -1,0 +1,33 @@
+---
+- name: Deploy Code Server
+  hosts: code-server
+  become: true
+  tasks:
+    - name: Create code-server directory
+      file:
+        path: /opt/code-server/config
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/code-server/docker-compose.yml
+        content: |
+          services:
+            code-server:
+              image: lscr.io/linuxserver/code-server:latest
+              container_name: code-server
+              restart: unless-stopped
+              ports:
+                - 8443:8443
+              environment:
+                - PUID=1000
+                - PGID=1000
+                - TZ=America/New_York
+                - PASSWORD=changeme
+              volumes:
+                - /opt/code-server/config:/config
+
+    - name: Start code-server
+      shell: docker compose up -d
+      args:
+        chdir: /opt/code-server

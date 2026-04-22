@@ -1,0 +1,31 @@
+---
+- name: Deploy Grafana
+  hosts: grafana
+  become: true
+  tasks:
+    - name: Create grafana directory
+      file:
+        path: /opt/grafana/data
+        state: directory
+        mode: '0777'
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/grafana/docker-compose.yml
+        content: |
+          services:
+            grafana:
+              image: grafana/grafana:latest
+              container_name: grafana
+              restart: unless-stopped
+              ports:
+                - 3000:3000
+              volumes:
+                - /opt/grafana/data:/var/lib/grafana
+              environment:
+                - GF_SECURITY_ADMIN_PASSWORD=admin
+
+    - name: Start grafana
+      shell: docker compose up -d
+      args:
+        chdir: /opt/grafana

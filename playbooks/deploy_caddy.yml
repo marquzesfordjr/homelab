@@ -1,0 +1,53 @@
+---
+- name: Deploy Caddy
+  hosts: caddy
+  become: true
+  tasks:
+    - name: Create caddy directory
+      file:
+        path: /opt/caddy
+        state: directory
+
+    - name: Deploy Caddyfile
+      copy:
+        dest: /opt/caddy/Caddyfile
+        content: |
+          {
+            local_certs
+          }
+
+          homarr.local {
+            reverse_proxy 192.168.137.203:7575
+          }
+
+          vaultwarden.local {
+            reverse_proxy 192.168.137.201:8080
+          }
+
+          portainer.local {
+            reverse_proxy 192.168.137.209:9000
+          }
+
+          code.local {
+            reverse_proxy 192.168.137.207:8443
+          }
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/caddy/docker-compose.yml
+        content: |
+          services:
+            caddy:
+              image: caddy:latest
+              container_name: caddy
+              restart: unless-stopped
+              network_mode: host
+              volumes:
+                - /opt/caddy/Caddyfile:/etc/caddy/Caddyfile
+                - /opt/caddy/data:/data
+                - /opt/caddy/config:/config
+
+    - name: Start caddy
+      shell: docker compose up -d
+      args:
+        chdir: /opt/caddy

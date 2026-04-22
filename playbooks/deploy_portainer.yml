@@ -1,0 +1,29 @@
+---
+- name: Deploy Portainer
+  hosts: portainer
+  become: true
+  tasks:
+    - name: Create portainer directory
+      file:
+        path: /opt/portainer/data
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/portainer/docker-compose.yml
+        content: |
+          services:
+            portainer:
+              image: portainer/portainer-ce:latest
+              container_name: portainer
+              restart: unless-stopped
+              ports:
+                - 9000:9000
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock
+                - /opt/portainer/data:/data
+
+    - name: Start portainer
+      shell: docker compose up -d
+      args:
+        chdir: /opt/portainer

@@ -1,0 +1,50 @@
+---
+- name: Deploy Prometheus
+  hosts: prometheus
+  become: true
+  tasks:
+    - name: Create prometheus directory
+      file:
+        path: /opt/prometheus
+        state: directory
+
+    - name: Deploy prometheus config
+      copy:
+        dest: /opt/prometheus/prometheus.yml
+        content: |
+          global:
+            scrape_interval: 15s
+
+          scrape_configs:
+            - job_name: 'proxmox'
+              static_configs:
+                - targets: ['192.168.137.241:9100']
+            - job_name: 'node-pxm02'
+              static_configs:
+                - targets: ['192.168.137.242:9100']
+            - job_name: 'pi'
+              static_configs:
+                - targets: ['192.168.137.50:9100']
+            - job_name: 'ops-01'
+              static_configs:
+                - targets: ['192.168.137.101:9100']
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/prometheus/docker-compose.yml
+        content: |
+          services:
+            prometheus:
+              image: prom/prometheus:latest
+              container_name: prometheus
+              restart: unless-stopped
+              ports:
+                - 9090:9090
+              volumes:
+                - /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+                - /opt/prometheus/data:/prometheus
+
+    - name: Start prometheus
+      shell: docker compose up -d
+      args:
+        chdir: /opt/prometheus
