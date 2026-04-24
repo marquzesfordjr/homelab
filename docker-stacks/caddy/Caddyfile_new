@@ -1,0 +1,35 @@
+{
+  local_certs
+}
+
+homarr.local {
+  reverse_proxy 192.168.20.203:7575
+}
+
+vaultwarden.local {
+  reverse_proxy 192.168.20.201:8080
+}
+
+code.local {
+  reverse_proxy 192.168.20.207:8443
+}
+
+grafana.local {
+  reverse_proxy 192.168.20.204:3000
+}
+
+prometheus.local {
+  reverse_proxy 192.168.20.205:9090
+}
+
+uptime.local {
+  reverse_proxy 192.168.20.206:3001
+}
+
+opencanary.local {
+  reverse_proxy 192.168.20.208:8501
+}
+
+authentik.local {
+  reverse_proxy 192.168.20.202:9001
+}
