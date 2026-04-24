@@ -1,0 +1,88 @@
+---
+- name: Deploy Authentik
+  hosts: authentik
+  become: true
+  tasks:
+    - name: Create directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /opt/authentik/media
+        - /opt/authentik/templates
+        - /opt/authentik/database
+        - /opt/authentik/redis
+
+    - name: Fix media permissions
+      file:
+        path: /opt/authentik/media
+        owner: 1000
+        group: 1000
+        recurse: yes
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/authentik/docker-compose.yml
+        content: |
+          services:
+            postgresql:
+              image: docker.io/library/postgres:16-alpine
+              container_name: authentik-db
+              restart: unless-stopped
+              volumes:
+                - /opt/authentik/database:/var/lib/postgresql/data
+              environment:
+                POSTGRES_PASSWORD: authentikpass
+                POSTGRES_USER: authentik
+                POSTGRES_DB: authentik
+            redis:
+              image: docker.io/library/redis:alpine
+              container_name: authentik-redis
+              restart: unless-stopped
+              volumes:
+                - /opt/authentik/redis:/data
+            server:
+              image: ghcr.io/goauthentik/server:2024.12.3
+              container_name: authentik-server
+              restart: unless-stopped
+              command: server
+              environment:
+                AUTHENTIK_REDIS__HOST: redis
+                AUTHENTIK_POSTGRESQL__HOST: postgresql
+                AUTHENTIK_POSTGRESQL__USER: authentik
+                AUTHENTIK_POSTGRESQL__NAME: authentik
+                AUTHENTIK_POSTGRESQL__PASSWORD: authentikpass
+                AUTHENTIK_SECRET_KEY: 66a519000b489d53d97411367f0354ff56ce6452b9fdf5ff9be8517160417008
+              volumes:
+                - /opt/authentik/media:/media
+                - /opt/authentik/templates:/templates
+              ports:
+                - 9001:9000
+                - 9444:9443
+              depends_on:
+                - postgresql
+                - redis
+            worker:
+              image: ghcr.io/goauthentik/server:2024.12.3
+              container_name: authentik-worker
+              restart: unless-stopped
+              command: worker
+              environment:
+                AUTHENTIK_REDIS__HOST: redis
+                AUTHENTIK_POSTGRESQL__HOST: postgresql
+                AUTHENTIK_POSTGRESQL__USER: authentik
+                AUTHENTIK_POSTGRESQL__NAME: authentik
+                AUTHENTIK_POSTGRESQL__PASSWORD: authentikpass
+                AUTHENTIK_SECRET_KEY: 66a519000b489d53d97411367f0354ff56ce6452b9fdf5ff9be8517160417008
+              volumes:
+                - /opt/authentik/media:/media
+                - /opt/authentik/templates:/templates
+                - /var/run/docker.sock:/var/run/docker.sock
+              depends_on:
+                - postgresql
+                - redis
+
+    - name: Start authentik
+      shell: docker compose up -d
+      args:
+        chdir: /opt/authentik
