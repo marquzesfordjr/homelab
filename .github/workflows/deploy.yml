@@ -12,7 +12,29 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Run Ansible playbook
-        run: |
-          cd $GITHUB_WORKSPACE
-          ansible-playbook playbooks/apps.yml -i inventories/hosts.yml --vault-password-file ~/.vault_pass
+      - name: Deploy Caddy
+        run: ansible-playbook playbooks/deploy_caddy.yml -i inventories/hosts.yml
+
+      - name: Deploy Homarr
+        run: ansible-playbook playbooks/deploy_homarr.yml -i inventories/hosts.yml
+
+      - name: Deploy Vaultwarden
+        run: ansible-playbook playbooks/deploy_vaultwarden.yml -i inventories/hosts.yml
+
+      - name: Deploy Grafana
+        run: ansible-playbook playbooks/deploy_grafana.yml -i inventories/hosts.yml
+
+      - name: Deploy Prometheus
+        run: ansible-playbook playbooks/deploy_prometheus.yml -i inventories/hosts.yml
+
+      - name: Deploy Uptime Kuma
+        run: ansible-playbook playbooks/deploy_uptime_kuma.yml -i inventories/hosts.yml
+
+      - name: Deploy Code Server
+        run: ansible-playbook playbooks/deploy_code_server.yml -i inventories/hosts.yml
+
+      - name: Deploy OpenCanary
+        run: ansible-playbook playbooks/deploy_opencanary.yml -i inventories/hosts.yml
+
+      - name: Deploy Authentik
+        run: ansible-playbook playbooks/deploy_authentik.yml -i inventories/hosts.yml
