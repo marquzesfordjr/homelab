@@ -3,14 +3,8 @@ services:
     image: caddy:latest
     container_name: caddy
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    network_mode: host
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-
-volumes:
-  caddy_data:
-  caddy_config:
+      - /opt/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - /opt/caddy/data:/data
+      - /opt/caddy/config:/config

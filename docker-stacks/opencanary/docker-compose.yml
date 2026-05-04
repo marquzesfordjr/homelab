@@ -1,0 +1,14 @@
+services:
+  opencanary:
+    image: chrisjbawden/opencanary-ui:latest
+    container_name: opencanary
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - MA_PORT=8501
+      - TZ=America/New_York
+    volumes:
+      - /opt/opencanary/config:/etc/opencanaryd

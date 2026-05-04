@@ -1,0 +1,57 @@
+services:
+  stremio:
+    image: stremio/server:latest
+    container_name: stremio
+    restart: unless-stopped
+    ports:
+      - 11470:11470
+      - 12470:12470
+    volumes:
+      - /opt/stremio/data:/root/.stremio-server
+    environment:
+      - NO_CORS=1
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *
+      - WATCHTOWER_NOTIFICATIONS=false
+
+  postgresql:
+    image: postgres:16-alpine
+    container_name: mediafusion-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=mediafusion
+      - POSTGRES_USER=mediafusion
+      - POSTGRES_DB=mediafusion
+    volumes:
+      - /opt/stremio/postgresql:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    container_name: mediafusion-redis
+    restart: unless-stopped
+
+  mediafusion:
+    image: mhdzumair/mediafusion:latest
+    container_name: mediafusion
+    restart: unless-stopped
+    ports:
+      - 8000:8000
+    environment:
+      - POSTGRES_URI=postgresql+asyncpg://mediafusion:mediafusion@mediafusion-db/mediafusion
+      - SECRET_KEY=homelab1234567890123456789012345
+      - API_PASSWORD=homelab123
+      - CONTACT_EMAIL=marquzesford@gmail.com
+      - HOST_URL=http://192.168.137.210:8000
+      - ADDON_URL=http://192.168.137.210:8000
+      - REDIS_URL=redis://mediafusion-redis:6379
+    depends_on:
+      - postgresql
+      - redis
