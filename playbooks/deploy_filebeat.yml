@@ -1,0 +1,69 @@
+---
+- name: Deploy Filebeat on all hosts
+  hosts: lxc:proxmox:pi
+  become: true
+  tasks:
+    - name: Enable system module
+      shell: filebeat modules enable system
+      ignore_errors: yes
+
+    - name: Enable syslog and auth in system module
+      replace:
+        path: /etc/filebeat/modules.d/system.yml
+        regexp: 'enabled: false'
+        replace: 'enabled: true'
+      ignore_errors: yes
+
+    - name: Restart filebeat
+      systemd:
+        name: filebeat
+        state: restarted
+
+    - name: Enable system module
+      shell: filebeat modules enable system
+      ignore_errors: yes
+
+    - name: Add Elastic GPG key
+      shell: |
+        curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | gpg --dearmor -o /usr/share/keyrings/elastic.gpg
+      args:
+        creates: /usr/share/keyrings/elastic.gpg
+
+    - name: Add Elastic repository
+      copy:
+        dest: /etc/apt/sources.list.d/elastic-8.x.list
+        content: "deb [signed-by=/usr/share/keyrings/elastic.gpg] https://artifacts.elastic.co/packages/8.x/apt stable main"
+
+    - name: Install filebeat
+      apt:
+        name: filebeat
+        state: present
+        update_cache: yes
+
+    - name: Configure filebeat
+      copy:
+        dest: /etc/filebeat/filebeat.yml
+        content: |
+          filebeat.inputs:
+          - type: filestream
+            id: syslog
+            enabled: true
+            paths:
+              - /var/log/syslog
+              - /var/log/auth.log
+              - /var/log/*.log
+
+          output.elasticsearch:
+            hosts: ["https://192.168.137.110:9200"]
+            username: "elastic"
+            password: "7b8FT15ZIkJSPXeJ6pMt"
+            ssl.verification_mode: none
+
+          setup.kibana:
+            host: "http://192.168.137.110:5601"
+
+    - name: Enable and start filebeat
+      systemd:
+        name: filebeat
+        enabled: yes
+        state: started
