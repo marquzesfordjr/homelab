@@ -18,6 +18,6 @@ done
 rsync -avz /tmp/homelab-backup/$DATE/ $NAS/$DATE/
 
 # Keep only last 7 days locally
-ssh admin@192.168.137.50 "find /mnt/ssd/share/backups -maxdepth 1 -type d -mtime +7 -exec rm -rf {} \;"
+find /mnt/ssd/share/backups -maxdepth 1 -type d -mtime +7 -exec rm -rf {} \;
 
 echo "Backup complete: $DATE"
