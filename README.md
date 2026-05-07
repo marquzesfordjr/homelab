@@ -10,7 +10,7 @@ Ansible-managed homelab running on Proxmox cluster.
 | pxm01 | 192.168.137.241 | Proxmox Node 1 |
 | pxm02 | 192.168.137.242 | Proxmox Node 2 |
 | ops-01 | 192.168.137.101 | Ansible controller, GitHub runner |
-| rpi-01 | 192.168.137.50 | Raspberry Pi 5 — AdGuard, NAS |
+| rpi-01 | 192.168.137.50 | Raspberry Pi 5 w/ POE HAT/SSD - AdGuard, NAS |
 
 ### LXC Containers
 | CT | Hostname | IP | Service |
