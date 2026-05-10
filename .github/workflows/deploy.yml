@@ -33,8 +33,7 @@ jobs:
       - name: Deploy Code Server
         run: ansible-playbook playbooks/deploy_code_server.yml -i inventories/hosts.yml
 
-      - name: Deploy OpenCanary
-        continue-on-error: true
+      - name: Deploy Nextcloud
         run: ansible-playbook playbooks/deploy_opencanary.yml -i inventories/hosts.yml
 
       - name: Deploy Authentik
