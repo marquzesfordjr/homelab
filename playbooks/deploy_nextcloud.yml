@@ -1,67 +1,54 @@
 ---
-- name: Deploy OpenCanary
-  hosts: opencanary
+- name: Deploy Nextcloud
+  hosts: nextcloud
   become: true
   tasks:
-    - name: Create opencanary config directory
+    - name: Create nextcloud directories
       file:
-        path: /opt/opencanary/config
+        path: "{{ item }}"
         state: directory
-
-    - name: Deploy opencanary config
-      copy:
-        dest: /opt/opencanary/config/opencanary.conf
-        content: |
-          {
-              "device.node_id": "opencanary-homelab",
-              "logger": {
-                  "class": "PyLogger",
-                  "kwargs": {
-                      "formatters": {
-                          "plain": {
-                              "format": "%(message)s"
-                          }
-                      },
-                      "handlers": {
-                          "console": {
-                              "class": "logging.StreamHandler",
-                              "stream": "ext://sys.stdout"
-                          }
-                      }
-                  }
-              },
-              "ftp.enabled": true,
-              "ftp.port": 21,
-              "http.enabled": true,
-              "http.port": 8880,
-              "http.banner": "Apache/2.2.22 (Ubuntu)",
-              "ssh.enabled": true,
-              "ssh.port": 2222,
-              "telnet.enabled": true,
-              "telnet.port": 2323,
-              "smb.enabled": false
-          }
+      loop:
+        - /opt/nextcloud
+        - /opt/nextcloud/data
+        - /opt/nextcloud/db
 
     - name: Deploy docker-compose
       copy:
-        dest: /opt/opencanary/docker-compose.yml
+        dest: /opt/nextcloud/docker-compose.yml
         content: |
           services:
-            opencanary:
-              image: chrisjbawden/opencanary-ui:latest
-              container_name: opencanary
+            db:
+              image: mariadb:10.11
+              container_name: nextcloud-db
               restart: unless-stopped
-              network_mode: host
-              cap_add:
-                - NET_ADMIN
-                - NET_RAW
-              environment:
-                - MA_PORT=8501
-                - TZ=America/New_York
               volumes:
-                - /opt/opencanary/config:/etc/opencanaryd
+                - /opt/nextcloud/db:/var/lib/mysql
+              environment:
+                - MYSQL_ROOT_PASSWORD=nextcloudroot
+                - MYSQL_DATABASE=nextcloud
+                - MYSQL_USER=nextcloud
+                - MYSQL_PASSWORD=nextcloudpass
 
-    - name: Start opencanary
+            nextcloud:
+              image: nextcloud:latest
+              container_name: nextcloud
+              restart: unless-stopped
+              ports:
+                - 8080:80
+              volumes:
+                - /opt/nextcloud/data:/var/www/html
+              environment:
+                - MYSQL_HOST=db
+                - MYSQL_DATABASE=nextcloud
+                - MYSQL_USER=nextcloud
+                - MYSQL_PASSWORD=nextcloudpass
+                - NEXTCLOUD_ADMIN_USER=admin
+                - NEXTCLOUD_ADMIN_PASSWORD=homelab123
+                - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.local 192.168.137.208
+              depends_on:
+                - db
+
+    - name: Start nextcloud
       shell: docker compose up -d
       args:
-        chdir: /opt/opencanary
+        chdir: /opt/nextcloud
