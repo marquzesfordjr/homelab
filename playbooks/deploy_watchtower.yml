@@ -1,0 +1,30 @@
+---
+- name: Deploy Watchtower on all LXCs
+  hosts: lxc
+  become: true
+  tasks:
+    - name: Create watchtower directory
+      file:
+        path: /opt/watchtower
+        state: directory
+
+    - name: Deploy watchtower compose
+      copy:
+        dest: /opt/watchtower/docker-compose.yml
+        content: |
+          services:
+            watchtower:
+              image: containrrr/watchtower
+              container_name: watchtower
+              restart: unless-stopped
+              volumes:
+                - /var/run/docker.sock:/var/run/docker.sock
+              environment:
+                - WATCHTOWER_CLEANUP=true
+                - WATCHTOWER_SCHEDULE=0 0 4 * * *
+                - WATCHTOWER_NOTIFICATIONS=false
+
+    - name: Start watchtower
+      shell: docker compose up -d
+      args:
+        chdir: /opt/watchtower
