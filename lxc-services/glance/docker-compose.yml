@@ -1,0 +1,10 @@
+services:
+  glance:
+    image: glanceapp/glance:latest
+    container_name: glance
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+    volumes:
+      - /opt/glance/config/glance.yml:/app/config/glance.yml
+      - /etc/localtime:/etc/localtime:ro
