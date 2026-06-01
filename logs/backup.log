@@ -620,3 +620,5 @@ Backup complete: 2026-05-14
 /bin/sh: 1: /home/user/homelab/scripts/backup.sh: Permission denied
 /bin/sh: 1: /home/user/homelab/scripts/backup.sh: Permission denied
 /bin/sh: 1: /home/user/homelab/scripts/backup.sh: Permission denied
+/bin/sh: 1: /home/user/homelab/scripts/backup.sh: Permission denied
+/bin/sh: 1: /home/user/homelab/scripts/backup.sh: Permission denied
