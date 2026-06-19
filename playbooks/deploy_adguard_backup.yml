@@ -1,0 +1,22 @@
+---
+- name: Deploy AdGuard Home Backup
+  hosts: adguard-backup
+  become: true
+  tasks:
+    - name: Install curl
+      apt:
+        name: curl
+        state: present
+        update_cache: yes
+
+    - name: Install AdGuard Home
+      shell: |
+        curl -s -S -L https://raw.githubusercontent.com/AdguardTeam/AdGuardHome/master/scripts/install.sh | sh -s -- -v
+      args:
+        creates: /opt/AdGuardHome/AdGuardHome
+
+    - name: Ensure AdGuard Home is running
+      systemd:
+        name: AdGuardHome
+        enabled: yes
+        state: started

@@ -18,10 +18,6 @@ jobs:
       - name: Deploy Vaultwarden
         run: ansible-playbook playbooks/deploy_vaultwarden.yml -i inventories/hosts.yml
 
-      - name: Deploy Homarr
-        continue-on-error: true
-        run: ansible-playbook playbooks/deploy_homarr.yml -i inventories/hosts.yml
-
       - name: Deploy Grafana
         run: ansible-playbook playbooks/deploy_grafana.yml -i inventories/hosts.yml
 
@@ -31,8 +27,8 @@ jobs:
       - name: Deploy Uptime Kuma
         run: ansible-playbook playbooks/deploy_uptime_kuma.yml -i inventories/hosts.yml
 
-      - name: Deploy Code Server
-        run: ansible-playbook playbooks/deploy_code_server.yml -i inventories/hosts.yml
+      - name: Deploy Adguard Backup
+        run: ansible-playbook playbooks/deploy_adguard_backup.yml -i inventories/hosts.yml
 
       - name: Deploy Nextcloud
         continue-on-error: true
