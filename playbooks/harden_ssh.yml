@@ -1,0 +1,23 @@
+---
+- name: Harden SSH - disable password auth
+  hosts: all
+  become: true
+  tasks:
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Disable root password login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin prohibit-password'
+        state: present
+
+    - name: Restart SSH
+      systemd:
+        name: ssh
+        state: restarted

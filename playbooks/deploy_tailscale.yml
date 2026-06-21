@@ -1,0 +1,16 @@
+---
+- name: Configure Tailscale subnet router
+  hosts: tailscale
+  become: true
+  tasks:
+    - name: Enable IP forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: '1'
+        permanent: yes
+
+    - name: Ensure Tailscale is running
+      systemd:
+        name: tailscaled
+        enabled: yes
+        state: started

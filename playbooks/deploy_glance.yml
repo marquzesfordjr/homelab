@@ -1,0 +1,29 @@
+---
+- name: Deploy Glance Dashboard
+  hosts: glance
+  become: true
+  tasks:
+    - name: Create glance directory
+      file:
+        path: /opt/glance/config
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/glance/docker-compose.yml
+        content: |
+          services:
+            glance:
+              image: glanceapp/glance:latest
+              container_name: glance
+              restart: unless-stopped
+              ports:
+                - 8080:8080
+              volumes:
+                - /opt/glance/config/glance.yml:/app/config/glance.yml
+                - /etc/localtime:/etc/localtime:ro
+
+    - name: Start glance
+      shell: docker compose up -d
+      args:
+        chdir: /opt/glance
