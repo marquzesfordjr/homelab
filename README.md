@@ -17,13 +17,13 @@ Ansible-managed homelab running on Proxmox cluster.
 |----|----------|----|---------|
 | 200 | caddy | 192.168.137.200 | Reverse proxy |
 | 201 | vaultwarden | 192.168.137.201 | Password manager |
-| 202 | authentik | 192.168.137.202 | Identity provider |
-| 203 | homarr | 192.168.137.203 | Dashboard |
+| 202 | home-assistant | 192.168.137.202 | Home automation |
+| 203 | glance | 192.168.137.203 | Dashboard |
 | 204 | grafana | 192.168.137.204 | Metrics dashboards |
 | 205 | prometheus | 192.168.137.205 | Metrics collection |
 | 206 | uptime-kuma | 192.168.137.206 | Uptime monitoring |
-| 207 | code-server | 192.168.137.207 | VS Code in browser |
-| 208 | opencanary | 192.168.137.208 | Honeypot |
+| 207 | adguardhome-backup | 192.168.137.51 | Backup DNS |
+| 208 | nextcloud | 192.168.137.208 | Private Cloud |
 | 209 | tailscale | 192.168.137.209 | VPN subnet router |
 | 210 | stremio | 192.168.137.210 | Stremio server + MediaFusion |
 
@@ -34,14 +34,17 @@ Ansible-managed homelab running on Proxmox cluster.
 - WiFi AP: 192.168.137.2 (TP-Link AXE75)
 - Remote access: Tailscale
 
+## Vulnerability Management
+- Nessus Essentials Plus — vulnerability scanning
+- Scan schedule: weekly
+- Last scan: June 2026
+- Hosts scanned: 20
+
 ## Services
-- **Homarr** — https://homarr.local
+- **glance** — https://glance.local
 - **Vaultwarden** — https://vaultwarden.local
 - **Grafana** — https://grafana.local
 - **Uptime Kuma** — https://uptime.local
-- **Code Server** — https://code.local
-- **OpenCanary** — https://opencanary.local
-- **Authentik** — https://authentik.local
 - **Proxmox** — https://192.168.137.241:8006
 
 ## Quick Start
