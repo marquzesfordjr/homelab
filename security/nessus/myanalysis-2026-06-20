@@ -1,0 +1,9 @@
+## My Thoughts
+
+Going into this I expected to find some issues but I was surprised by how many critical findings showed up across my LXC containers. The good news is most of them came down to the same root cause — outdated Debian packages across my entire container fleet. Running one Ansible playbook fixed the majority of critical findings across all 11 containers at once which showed me how powerful infrastructure as code really is for security remediation.
+
+OPNsense having the worst severity ratio in the scan was a wake up call. Your firewall having 7 critical vulnerabilities is the last thing you want. That got patched immediately.
+
+The 3D printer finding was interesting — it had a web server cookie injection vulnerability and there's nothing I can do about it since it's IoT. It's now documented as accepted risk and isolated on my network.
+
+The biggest lesson was that regular patching matters. Most of these vulnerabilities were fixed packages that just hadn't been updated. Going forward I have weekly scans scheduled and Watchtower handling automatic Docker updates nightly.
