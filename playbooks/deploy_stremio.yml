@@ -37,8 +37,8 @@
                 - SECRET_KEY=homelab1234567890123456789012345
                 - API_PASSWORD=homelab123
                 - CONTACT_EMAIL=marquzesford@gmail.com
-                - HOST_URL=http://192.168.137.210:8000
-                - ADDON_URL=http://192.168.137.210:8000
+                - HOST_URL=http://10.20.0.209:8000
+                - ADDON_URL=http://10.20.0.209:8000
               depends_on:
                 - mediafusion-db
                 - mediafusion-redis

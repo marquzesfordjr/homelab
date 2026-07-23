@@ -15,21 +15,29 @@
           {
             local_certs
           }
-
-          homarr.local {
-            reverse_proxy 192.168.137.203:7575
+          vaultwarden.home.arpa {
+            reverse_proxy 10.20.0.201:8080
           }
-
-          vaultwarden.local {
-            reverse_proxy 192.168.137.201:8080
+          grafana.home.arpa {
+            reverse_proxy 10.20.0.204:3000
           }
-
-          portainer.local {
-            reverse_proxy 192.168.137.209:9000
+          prometheus.home.arpa {
+            reverse_proxy 10.20.0.205:9090
           }
-
-          code.local {
-            reverse_proxy 192.168.137.207:8443
+          uptime.home.arpa {
+            reverse_proxy 10.20.0.206:3001
+          }
+          glance.home.arpa {
+            reverse_proxy 10.20.0.203:8080
+          }
+          homeassistant.home.arpa {
+            reverse_proxy 10.20.0.202:8123
+          }
+          nextcloud.home.arpa {
+            reverse_proxy 10.20.0.208:80
+          }
+          adguard.home.arpa {
+            reverse_proxy 10.20.0.50:3000
           }
 
     - name: Deploy docker-compose
