@@ -1,6 +1,6 @@
 ---
 - name: Update all packages
-  hosts: lxc:proxmox:pi
+  hosts: lxc:proxmox:raspberry:control
   become: true
   tasks:
     - name: Update apt cache and upgrade packages
