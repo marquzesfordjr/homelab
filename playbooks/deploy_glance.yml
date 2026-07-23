@@ -8,6 +8,35 @@
         path: /opt/glance/config
         state: directory
 
+    - name: Deploy glance config
+      copy:
+        dest: /opt/glance/config/glance.yml
+        content: |
+          pages:
+            - name: Home
+              columns:
+                - size: full
+                  widgets:
+                    - type: clock
+                      hour-format: 12
+                    - type: monitor
+                      title: Services
+                      sites:
+                        - title: Vaultwarden
+                          url: http://10.20.0.201:8080
+                        - title: Grafana
+                          url: http://10.20.0.204:3000
+                        - title: Prometheus
+                          url: http://10.20.0.205:9090
+                        - title: Home Assistant
+                          url: http://10.20.0.202:8123
+                        - title: Nextcloud
+                          url: http://10.20.0.208:80
+                        - title: AdGuard Primary
+                          url: http://10.20.0.50:3000
+                        - title: AdGuard Backup
+                          url: http://10.20.0.51:3000
+
     - name: Deploy docker-compose
       copy:
         dest: /opt/glance/docker-compose.yml
@@ -22,6 +51,41 @@
               volumes:
                 - /opt/glance/config/glance.yml:/app/config/glance.yml
                 - /etc/localtime:/etc/localtime:ro
+
+    - name: Remove bad directory mount if exists
+      shell: |
+        docker rm -f glance 2>/dev/null || true
+        rm -rf /opt/glance/config/glance.yml
+        mkdir -p /opt/glance/config
+
+    - name: Recreate config file
+      copy:
+        dest: /opt/glance/config/glance.yml
+        content: |
+          pages:
+            - name: Home
+              columns:
+                - size: full
+                  widgets:
+                    - type: clock
+                      hour-format: 12
+                    - type: monitor
+                      title: Services
+                      sites:
+                        - title: Vaultwarden
+                          url: http://10.20.0.201:8080
+                        - title: Grafana
+                          url: http://10.20.0.204:3000
+                        - title: Prometheus
+                          url: http://10.20.0.205:9090
+                        - title: Home Assistant
+                          url: http://10.20.0.202:8123
+                        - title: Nextcloud
+                          url: http://10.20.0.208:80
+                        - title: AdGuard Primary
+                          url: http://10.20.0.50:3000
+                        - title: AdGuard Backup
+                          url: http://10.20.0.51:3000
 
     - name: Start glance
       shell: docker compose up -d
