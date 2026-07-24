@@ -1,6 +1,6 @@
 ---
-- name: Harden SSH - disable password auth
-  hosts: all
+- name: Harden SSH
+  hosts: proxmox:lxc:raspberry:control
   become: true
   tasks:
     - name: Disable password authentication
@@ -15,6 +15,70 @@
         path: /etc/ssh/sshd_config
         regexp: '^#?PermitRootLogin'
         line: 'PermitRootLogin prohibit-password'
+        state: present
+
+    - name: Disable empty passwords
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitEmptyPasswords'
+        line: 'PermitEmptyPasswords no'
+        state: present
+
+    - name: Set max auth tries
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?MaxAuthTries'
+        line: 'MaxAuthTries 3'
+        state: present
+
+    - name: Disable X11 forwarding
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?X11Forwarding'
+        line: 'X11Forwarding no'
+        state: present
+
+    - name: Set login grace time
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?LoginGraceTime'
+        line: 'LoginGraceTime 30'
+        state: present
+
+    - name: Disable agent forwarding
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?AllowAgentForwarding'
+        line: 'AllowAgentForwarding no'
+        state: present
+
+    - name: Set strong ciphers
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Ciphers'
+        line: 'Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,chacha20-poly1305@openssh.com'
+        state: present
+
+    - name: Set strong MACs
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?MACs'
+        line: 'MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com'
+        state: present
+
+    - name: Add login banner
+      copy:
+        dest: /etc/issue.net
+        content: |
+          ***************************************************************************
+          * Authorized access only. All activity is monitored and logged.           *
+          ***************************************************************************
+
+    - name: Enable banner
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Banner'
+        line: 'Banner /etc/issue.net'
         state: present
 
     - name: Restart SSH

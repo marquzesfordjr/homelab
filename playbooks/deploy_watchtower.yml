@@ -22,7 +22,7 @@
               environment:
                 - WATCHTOWER_CLEANUP=true
                 - WATCHTOWER_SCHEDULE=0 0 4 * * *
-                - WATCHTOWER_NOTIFICATIONS=false
+                - DOCKER_API_VERSION=1.43
 
     - name: Start watchtower
       shell: docker compose up -d
