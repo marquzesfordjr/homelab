@@ -5,7 +5,7 @@
   tasks:
     - name: Create vaultwarden directory
       file:
-        path: /opt/vaultwarden/data
+        path: /opt/vaultwarden
         state: directory
 
     - name: Deploy docker-compose
@@ -24,6 +24,7 @@
               environment:
                 - SIGNUPS_ALLOWED=false
                 - ADMIN_TOKEN=your_admin_token_here
+                - DOMAIN=https://vaultwarden.home.arpa
 
     - name: Start vaultwarden
       shell: docker compose up -d
