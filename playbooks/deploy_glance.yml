@@ -8,34 +8,101 @@
         path: /opt/glance/config
         state: directory
 
+    - name: Remove any bad config mount
+      shell: |
+        docker rm -f glance 2>/dev/null || true
+        rm -rf /opt/glance/config/glance.yml
+        mkdir -p /opt/glance/config
+
     - name: Deploy glance config
       copy:
         dest: /opt/glance/config/glance.yml
         content: |
+          theme:
+            background-color: 222 14 8
+            primary-color: 187 60 55
+            contrast-multiplier: 1.2
+
           pages:
             - name: Home
               columns:
-                - size: full
+                - size: small
                   widgets:
                     - type: clock
-                      hour-format: 12
+                      hour-format: 24h
+                      timezones:
+                        - timezone: America/New_York
+                          label: Home
+
+                    - type: weather
+                      location: Northborough, MA, USA
+                      units: imperial
+                      hide-location: false
+
+                    - type: bookmarks
+                      groups:
+                        - title: Quick Links
+                          links:
+                            - title: Vaultwarden
+                              url: https://vaultwarden.home.arpa
+                            - title: Nextcloud
+                              url: https://nextcloud.home.arpa
+                            - title: Proxmox
+                              url: https://10.10.1.241:8006
+                            - title: OPNsense
+                              url: https://10.10.1.1
+
+                - size: full
+                  widgets:
                     - type: monitor
-                      title: Services
+                      title: Core Services
                       sites:
-                        - title: Vaultwarden
-                          url: http://10.20.0.201:8080
-                        - title: Grafana
-                          url: http://10.20.0.204:3000
-                        - title: Prometheus
-                          url: http://10.20.0.205:9090
-                        - title: Home Assistant
-                          url: http://10.20.0.202:8123
-                        - title: Nextcloud
-                          url: http://10.20.0.208:80
                         - title: AdGuard Primary
-                          url: http://10.20.0.50:3000
+                          url: https://adguard.home.arpa
+                          icon: si:adguard
                         - title: AdGuard Backup
                           url: http://10.20.0.51:3000
+                          icon: si:adguard
+                        - title: Vaultwarden
+                          url: https://vaultwarden.home.arpa
+                          icon: si:vaultwarden
+                        - title: Nextcloud
+                          url: https://nextcloud.home.arpa
+                          icon: si:nextcloud
+                        - title: Home Assistant
+                          url: https://homeassistant.home.arpa
+                          icon: si:homeassistant
+
+                    - type: monitor
+                      title: Monitoring & Metrics
+                      sites:
+                        - title: Grafana
+                          url: https://grafana.home.arpa
+                          icon: si:grafana
+                        - title: Prometheus
+                          url: https://prometheus.home.arpa
+                          icon: si:prometheus
+                        - title: Uptime Kuma
+                          url: https://uptime.home.arpa
+                          icon: si:uptimekuma
+
+                    - type: server-stats
+                      servers:
+                        - type: local
+                          name: This Node
+
+                - size: small
+                  widgets:
+                    - type: rss
+                      title: Homelab / Sysadmin
+                      style: vertical-list
+                      limit: 8
+                      collapse-after: 4
+                      feeds:
+                        - url: https://www.reddit.com/r/homelab.rss
+                          title: r/homelab
+                        - url: https://www.reddit.com/r/selfhosted.rss
+                          title: r/selfhosted
 
     - name: Deploy docker-compose
       copy:
@@ -51,41 +118,6 @@
               volumes:
                 - /opt/glance/config/glance.yml:/app/config/glance.yml
                 - /etc/localtime:/etc/localtime:ro
-
-    - name: Remove bad directory mount if exists
-      shell: |
-        docker rm -f glance 2>/dev/null || true
-        rm -rf /opt/glance/config/glance.yml
-        mkdir -p /opt/glance/config
-
-    - name: Recreate config file
-      copy:
-        dest: /opt/glance/config/glance.yml
-        content: |
-          pages:
-            - name: Home
-              columns:
-                - size: full
-                  widgets:
-                    - type: clock
-                      hour-format: 12
-                    - type: monitor
-                      title: Services
-                      sites:
-                        - title: Vaultwarden
-                          url: http://10.20.0.201:8080
-                        - title: Grafana
-                          url: http://10.20.0.204:3000
-                        - title: Prometheus
-                          url: http://10.20.0.205:9090
-                        - title: Home Assistant
-                          url: http://10.20.0.202:8123
-                        - title: Nextcloud
-                          url: http://10.20.0.208:80
-                        - title: AdGuard Primary
-                          url: http://10.20.0.50:3000
-                        - title: AdGuard Backup
-                          url: http://10.20.0.51:3000
 
     - name: Start glance
       shell: docker compose up -d
