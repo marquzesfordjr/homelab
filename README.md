@@ -18,7 +18,7 @@ Full ground-up rebuild completed — dedicated firewall hardware, proper VLAN se
 
 | Device | Model | IP | Role |
 |---|---|---|---|
-| Protectli FW4B | Dedicated firewall | 10.10.1.1 | OPNsense + Suricata IDS |
+| Fanless Mini PC | Dedicated firewall | 10.10.1.1 | OPNsense + Suricata IDS |
 | pxm01 | ThinkCentre M910q | 10.10.1.241 | Proxmox Node 1 (16GB RAM) |
 | pxm02 | ThinkCentre M910q | 10.10.1.242 | Proxmox Node 2 (16GB RAM) |
 | pxm03 | ThinkCentre M910q | 10.10.1.243 | Proxmox Node 3 (8GB RAM) |
@@ -78,13 +78,6 @@ Proxmox VE, Ansible, AdGuard Home, Caddy, Prometheus + Grafana, Uptime Kuma, Vau
 5. **Check actual node disk/RAM capacity before placing large VMs** — pxm03's real 68GB root volume (not the expected ~230GB) caused a PBS placement failure; always verify with `lsblk`/`vgs` before sizing.
 6. **PBS should never back up itself in the same job** — exclude the PBS VM ID from its own backup job to avoid resource contention and filesystem lock issues.
 7. **Tailscale route advertisement must be set in the plugin's persistent config, not just via CLI** — CLI-only `--advertise-routes` gets wiped on service restart/reboot.
-
-## Remaining / Optional
-
-- Wazuh — deliberately skipped for now
-- Stremio — not needed currently
-- AlmaLinux/RHEL Lab VMs — available for RHCSA practice
-- Omada switch TRUSTED-VLAN (10.40.0.3) management reachability — cosmetic issue, workaround in place (monitor via 10.20.0.3 instead)
 
 ---
 
@@ -149,4 +142,4 @@ Migrated from containerized Home Assistant (CT 202) to full Home Assistant OS as
 - i226-V NIC firmware update (NVM 2.22+)
 - LocalTuya DP mapping for energy monitoring
 - n8n deployment (notification consolidation, CrowdSec alert enrichment, budget CSV automation)
-- Eightree plugs re-paired to IoT VLAN (deferred to apartment move)
+- Eightree plugs re-paired to IoT VLAN
