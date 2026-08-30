@@ -1,0 +1,35 @@
+---
+- name: Deploy Seanime
+  hosts: seanime
+  become: true
+  tasks:
+    - name: Create seanime directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /opt/seanime/config
+        - /opt/seanime/data
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/seanime/docker-compose.yml
+        content: |
+          services:
+            seanime:
+              image: ju1js/seanime:latest
+              container_name: seanime
+              restart: unless-stopped
+              environment:
+                - SEANIME_SERVER_HOST=0.0.0.0
+                - SEANIME_SERVER_PORT=43211
+              ports:
+                - 43211:43211
+              volumes:
+                - /opt/seanime/config:/home/seanime/.config/Seanime
+                - /opt/seanime/data:/data
+
+    - name: Start seanime
+      shell: docker compose up -d
+      args:
+        chdir: /opt/seanime

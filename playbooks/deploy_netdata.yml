@@ -1,0 +1,41 @@
+---
+- name: Deploy Netdata
+  hosts: netdata
+  become: true
+  tasks:
+    - name: Create netdata directory
+      file:
+        path: /opt/netdata
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/netdata/docker-compose.yml
+        content: |
+          services:
+            netdata:
+              image: netdata/netdata:latest
+              container_name: netdata
+              restart: unless-stopped
+              hostname: netdata-homelab
+              ports:
+                - 19999:19999
+              cap_add:
+                - SYS_PTRACE
+                - SYS_ADMIN
+              security_opt:
+                - apparmor:unconfined
+              volumes:
+                - /opt/netdata/config:/etc/netdata
+                - /opt/netdata/lib:/var/lib/netdata
+                - /opt/netdata/cache:/var/cache/netdata
+                - /etc/passwd:/host/etc/passwd:ro
+                - /etc/group:/host/etc/group:ro
+                - /proc:/host/proc:ro
+                - /sys:/host/sys:ro
+                - /etc/os-release:/host/etc/os-release:ro
+
+    - name: Start netdata
+      shell: docker compose up -d
+      args:
+        chdir: /opt/netdata

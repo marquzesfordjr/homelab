@@ -85,3 +85,68 @@ Proxmox VE, Ansible, AdGuard Home, Caddy, Prometheus + Grafana, Uptime Kuma, Vau
 - Stremio — not needed currently
 - AlmaLinux/RHEL Lab VMs — available for RHCSA practice
 - Omada switch TRUSTED-VLAN (10.40.0.3) management reachability — cosmetic issue, workaround in place (monitor via 10.20.0.3 instead)
+
+---
+
+## Update — Firewall Hardware Replacement & Service Expansion
+
+### Firewall: Protectli FW4B → Custom J4105 Mini PC
+
+**New hardware:** Intel J4105 Quad Core, 4x Intel i226-V 2.5GbE NICs (`igc0-3`), 8GB DDR4, 240GB mSATA. OPNsense reinstalled fresh (UFS), config rebuilt from scratch after repeated failed restore attempts.
+
+**Critical hardware bug found and fixed:** Intel i225-V/i226-V controllers have a documented firmware/EEE (Energy Efficient Ethernet) power-management bug causing random link drops and dropped VLAN tags under normal traffic. Confirmed via `tcpdump -e` packet capture — frames arrived genuinely untagged despite correct switch-side VLAN config.
+
+**Fix applied** — added to `/boot/loader.conf.local`:
+hw.igc.disable_aspm=1
+dev.igc.0.eee_control=0
+dev.igc.1.eee_control=0
+dev.igc.2.eee_control=0
+dev.igc.3.eee_control=0
+dev.igc.0.fc=0
+dev.igc.1.fc=0
+dev.igc.2.fc=0
+dev.igc.3.fc=0
+hw.pci.do_power_nodriver=3
+
+**Known permanent fix (deferred):** Intel firmware NVM 2.22+ resolves this at the hardware level; board likely shipped with buggy 2.13/2.14. Flashing via `nvmupdate64e` deferred to a future session.
+
+**2.5G LAN limitation confirmed, not a bug:** WAN negotiates 2.5G successfully; LAN caps at 1G because the Omada SG2210P switch is Gigabit-only on every port (confirmed via spec sheet). TP-Link Omada ES210X-M2 (8x 2.5G + 2x 10G SFP+) identified as the fix — purchase pending. Netgear GS308EP retained for PoE.
+
+**New interface assignments:** `igc0` = LAN, `igc1` = WAN, `igc2`/`igc3` unused.
+
+### Home Assistant: LXC → HAOS VM
+
+Migrated from containerized Home Assistant (CT 202) to full Home Assistant OS as a Proxmox VM via the community-scripts Helper Script — same VM ID and IP (202 / 10.20.0.202), no prior data to migrate. HACS reinstalled. Official Tuya cloud integration used for Eightree smart plugs.
+
+**Known gap:** official Tuya integration doesn't expose power/energy entities for the Eightree ET01BG plugs, though the Smart Life app confirms hardware support. LocalTuya with manual DP mapping is the fix — deferred.
+
+### New LXC Services Deployed (10.20.0.210-219)
+
+| Service | IP | Status |
+|---|---|---|
+| Fail2Ban | 10.20.0.210 | Deployed, superseded by CrowdSec |
+| CrowdSec (central) | 10.20.0.211 | Fully deployed — agents + firewall bouncers on Caddy, pxm01/02/03; enrolled in CrowdSec Console |
+| Navidrome (was Infisical) | 10.20.0.212 | Deployed, no library populated |
+| Netdata | 10.20.0.213 | Deployed |
+| PeaNUT | 10.20.0.214 | Deployed, dormant — no UPS yet |
+| Ghostfolio (was OctoPrint) | 10.20.0.215 | Deployed, SSL config fixed |
+| Seanime | 10.20.0.216 | Deployed |
+| Willow | 10.20.0.217 | Deployed, needs ESP32 hardware |
+| WorldMonitor | 10.20.0.218 | Deployed, built from source |
+| Actual Budget | 10.20.0.219 | Deployed, HTTPS via Caddy, bank sync deferred |
+
+### DNS Hardening — Verified Working End-to-End
+
+- Port 53 NAT redirect to AdGuard on IoT/TRUSTED/HOMELAB regardless of client DNS config
+- DoT/DoH blocked on IoT/TRUSTED/HOMELAB; LAB intentionally open for security testing
+- Verified: hardcoded `nslookup ... 8.8.8.8` confirmed intercepted (visible in AdGuard query log); DoT/DoH connections confirmed blocked
+- Upstream tuned to Cloudflare (1.1.1.1, 1.0.0.1) based on real multi-position latency testing
+
+### Planned / Deferred
+
+- UPS purchase (CyberPower CP800AVR)
+- 2.5G switch purchase (Omada ES210X-M2)
+- i226-V NIC firmware update (NVM 2.22+)
+- LocalTuya DP mapping for energy monitoring
+- n8n deployment (notification consolidation, CrowdSec alert enrichment, budget CSV automation)
+- Eightree plugs re-paired to IoT VLAN (deferred to apartment move)

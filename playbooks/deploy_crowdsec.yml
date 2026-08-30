@@ -1,0 +1,33 @@
+---
+- name: Deploy CrowdSec
+  hosts: crowdsec
+  become: true
+  tasks:
+    - name: Create crowdsec directory
+      file:
+        path: /opt/crowdsec
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/crowdsec/docker-compose.yml
+        content: |
+          services:
+            crowdsec:
+              image: crowdsecurity/crowdsec:latest
+              container_name: crowdsec
+              restart: unless-stopped
+              ports:
+                - 8080:8080
+                - 6060:6060
+              volumes:
+                - /opt/crowdsec/config:/etc/crowdsec
+                - /opt/crowdsec/data:/var/lib/crowdsec/data
+                - /var/log:/var/log:ro
+              environment:
+                - COLLECTIONS=crowdsecurity/linux crowdsecurity/sshd
+
+    - name: Start crowdsec
+      shell: docker compose up -d
+      args:
+        chdir: /opt/crowdsec

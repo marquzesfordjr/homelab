@@ -1,0 +1,28 @@
+---
+- name: Deploy Actual Budget
+  hosts: actualbudget
+  become: true
+  tasks:
+    - name: Create actual budget directory
+      file:
+        path: /opt/actualbudget/data
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/actualbudget/docker-compose.yml
+        content: |
+          services:
+            actual:
+              image: actualbudget/actual-server:latest
+              container_name: actualbudget
+              restart: unless-stopped
+              ports:
+                - 5006:5006
+              volumes:
+                - /opt/actualbudget/data:/data
+
+    - name: Start actual budget
+      shell: docker compose up -d
+      args:
+        chdir: /opt/actualbudget
