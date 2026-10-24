@@ -2,85 +2,30 @@
 - name: Remove host from inventory
   hosts: ansible-01
   become: true
-  vars:
-    host_name: "{{ host_name }}"
   tasks:
-    - name: Show current inventory before removal
-      shell: python3 << 'PYEOF'
-import yaml
-
-with open('/root/homelab/inventories/hosts.yml', 'r') as f:
-    inv = yaml.safe_load(f)
-
-print("\n=== Current Inventory (BEFORE) ===\n")
-for group, data in inv['all']['children'].items():
-    if data and 'hosts' in data and data['hosts']:
-        print(f"[{group}]")
-        for host, vars in data['hosts'].items():
-            ip = vars.get('ansible_host', 'N/A') if vars else 'N/A'
-            print(f"  {host} -> {ip}")
-        print()
-PYEOF
+    - name: Show inventory before
+      command: python3 /root/homelab/scripts/show_inventory.py
       register: before
 
     - name: Display before
       debug:
         msg: "{{ before.stdout_lines }}"
 
-    - name: Remove host from inventory
-      shell: python3 << 'PYEOF'
-import yaml
-
-with open('/root/homelab/inventories/hosts.yml', 'r') as f:
-    inv = yaml.safe_load(f)
-
-host_name = "{{ host_name }}"
-removed = False
-
-for group, data in inv['all']['children'].items():
-    if data and 'hosts' in data and data['hosts']:
-        if host_name in data['hosts']:
-            del data['hosts'][host_name]
-            removed = True
-            print(f"Removed {host_name} from group [{group}]")
-
-if not removed:
-    print(f"Host {host_name} not found in inventory")
-
-with open('/root/homelab/inventories/hosts.yml', 'w') as f:
-    yaml.dump(inv, f, default_flow_style=False)
-PYEOF
+    - name: Remove host
+      command: python3 /root/homelab/scripts/remove_host.py {{ host_name }}
       register: result
 
-    - name: Display removal result
+    - name: Display result
       debug:
         msg: "{{ result.stdout_lines }}"
 
-    - name: Show inventory after removal
-      shell: python3 << 'PYEOF'
-import yaml
-
-with open('/root/homelab/inventories/hosts.yml', 'r') as f:
-    inv = yaml.safe_load(f)
-
-print("\n=== Current Inventory (AFTER) ===\n")
-for group, data in inv['all']['children'].items():
-    if data and 'hosts' in data and data['hosts']:
-        print(f"[{group}]")
-        for host, vars in data['hosts'].items():
-            ip = vars.get('ansible_host', 'N/A') if vars else 'N/A'
-            print(f"  {host} -> {ip}")
-        print()
-PYEOF
+    - name: Show inventory after
+      command: python3 /root/homelab/scripts/show_inventory.py
       register: after
 
     - name: Display after
       debug:
         msg: "{{ after.stdout_lines }}"
 
-    - name: Git sync after removal
-      shell: |
-        cd /root/homelab
-        git add -A
-        git commit -m "Remove {{ host_name }} from inventory"
-        git push origin main
+    - name: Git sync
+      shell: cd /root/homelab && git add -A && git commit -m "Remove {{ host_name }} from inventory" && git push origin main
