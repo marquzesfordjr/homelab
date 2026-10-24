@@ -8,6 +8,22 @@
     service_port: "{{ service_port }}"
     domain: "{{ service_name }}.home.arpa"
   tasks:
+    - name: Read AdGuard credentials from config
+      shell: |
+        python3 << 'PYEOF'
+import yaml
+with open('/opt/adguard-sync/config.yaml', 'r') as f:
+    config = yaml.safe_load(f)
+print(config['origin']['password'])
+print(config['replicas'][0]['password'])
+PYEOF
+      register: adguard_creds
+
+    - name: Set credential facts
+      set_fact:
+        adguard_primary_password: "{{ adguard_creds.stdout_lines[0] }}"
+        adguard_backup_password: "{{ adguard_creds.stdout_lines[1] }}"
+
     - name: Add DNS rewrite to AdGuard primary
       uri:
         url: "http://10.20.0.50/control/rewrite/add"
@@ -42,10 +58,10 @@
           {{ domain }} {
               reverse_proxy {{ service_ip }}:{{ service_port }}
           }
-      delegate_to: "{{ groups['lxc'] | select('match', 'caddy') | first }}"
+      delegate_to: caddy
 
     - name: Restart Caddy
       shell: docker compose restart
       args:
         chdir: /opt/caddy
-      delegate_to: "{{ groups['lxc'] | select('match', 'caddy') | first }}"
+      delegate_to: caddy
