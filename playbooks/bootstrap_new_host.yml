@@ -1,0 +1,115 @@
+---
+- name: Bootstrap new host
+  hosts: "{{ target }}"
+  become: true
+  tasks:
+    - name: Update packages
+      apt:
+        update_cache: yes
+        upgrade: yes
+
+    - name: Install essential packages
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - sudo
+          - openssh-server
+          - ca-certificates
+          - gnupg
+        state: present
+
+    - name: Set login banner
+      copy:
+        dest: /etc/issue.net
+        content: |
+          *******************************************************************************
+          *                                                                             *
+          *   ██╗  ██╗ ██████╗ ███╗   ███╗███████╗██╗      █████╗ ██████╗            *
+          *   ██║  ██║██╔═══██╗████╗ ████║██╔════╝██║     ██╔══██╗██╔══██╗           *
+          *   ███████║██║   ██║██╔████╔██║█████╗  ██║     ███████║██████╔╝           *
+          *   ██╔══██║██║   ██║██║╚██╔╝██║██╔══╝  ██║     ██╔══██║██╔══██╗           *
+          *   ██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗███████╗██║  ██║██████╔╝           *
+          *   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝           *
+          *                                                                             *
+          *******************************************************************************
+          *                                                                             *
+          *                        AUTHORIZED ACCESS ONLY                              *
+          *          All activity is monitored, logged and reported.                   *
+          *        Unauthorized access is strictly prohibited by law.                  *
+          *                                                                             *
+          *******************************************************************************
+        mode: '0644'
+
+    - name: Set banner in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Banner'
+        line: 'Banner /etc/issue.net'
+        state: present
+
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Disable challenge response
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?ChallengeResponseAuthentication'
+        line: 'ChallengeResponseAuthentication no'
+        state: present
+
+    - name: Create nessus user
+      user:
+        name: nessus
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Add nessus to sudoers
+      copy:
+        dest: /etc/sudoers.d/nessus
+        content: "nessus ALL=(ALL) NOPASSWD: ALL\n"
+        mode: '0440'
+
+    - name: Create nessus .ssh directory
+      file:
+        path: /home/nessus/.ssh
+        state: directory
+        owner: nessus
+        group: nessus
+        mode: '0700'
+
+    - name: Add Nessus scanner public key
+      authorized_key:
+        user: nessus
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIItbwYAjTTX2WczPdKeX2GFlXxXPvoe9TwVxnBemfiEn nessus-scanner"
+        state: present
+
+    - name: Add Ansible controller key
+      authorized_key:
+        user: root
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIACB3zcXXhp66RvqHj6vOPvPrIEm4Sj3dA9n34NhMwM8 root@ansible-01"
+        state: present
+
+    - name: Add Mac key
+      authorized_key:
+        user: root
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook-firewall"
+        state: present
+
+    - name: Add PC key
+      authorized_key:
+        user: root
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL4+kPTzIwsNkph/+OLyzyx/enk4fllGRmZVVC+d5JWD marquzes@DESKTOP-QV1BM7J"
+        state: present
+
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
