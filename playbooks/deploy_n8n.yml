@@ -1,0 +1,38 @@
+---
+- name: Deploy n8n
+  hosts: n8n
+  become: true
+  tasks:
+    - name: Create n8n directory
+      file:
+        path: /opt/n8n
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/n8n/docker-compose.yml
+        content: |
+          services:
+            n8n:
+              image: n8nio/n8n:latest
+              container_name: n8n
+              restart: unless-stopped
+              ports:
+                - 5678:5678
+              environment:
+                - N8N_HOST=n8n.home.arpa
+                - N8N_PORT=5678
+                - N8N_PROTOCOL=https
+                - WEBHOOK_URL=https://n8n.home.arpa
+                - N8N_BASIC_AUTH_ACTIVE=true
+                - N8N_BASIC_AUTH_USER=admin
+                - N8N_BASIC_AUTH_PASSWORD=YourN8NPassword
+                - GENERIC_TIMEZONE=America/New_York
+                - TZ=America/New_York
+              volumes:
+                - /opt/n8n/data:/home/node/.n8n
+
+    - name: Start n8n
+      shell: docker compose up -d
+      args:
+        chdir: /opt/n8n

@@ -9,14 +9,7 @@
     domain: "{{ service_name }}.home.arpa"
   tasks:
     - name: Read AdGuard credentials from config
-      shell: |
-        python3 << 'PYEOF'
-import yaml
-with open('/opt/adguard-sync/config.yaml', 'r') as f:
-    config = yaml.safe_load(f)
-print(config['origin']['password'])
-print(config['replicas'][0]['password'])
-PYEOF
+      command: python3 /root/homelab/scripts/get_adguard_creds.py
       register: adguard_creds
 
     - name: Set credential facts
