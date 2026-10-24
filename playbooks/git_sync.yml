@@ -6,12 +6,12 @@
     - name: Git add all changes
       shell: git add -A
       args:
-        chdir: /homelab
+        chdir: /root/homelab
 
     - name: Check if there are changes to commit
       shell: git diff --cached --quiet
       args:
-        chdir: /homelab
+        chdir: /root/homelab
       register: git_diff
       ignore_errors: yes
 
@@ -24,7 +24,7 @@
     - name: Git push
       shell: git push origin main
       args:
-        chdir: /homelab
+        chdir: /root/homelab
       when: git_diff.rc != 0
 
     - name: Nothing to sync
