@@ -2,22 +2,31 @@
 - name: Add host to inventory
   hosts: ansible-01
   become: true
-  vars:
-    host_name: "{{ host_name }}"
-    host_ip: "{{ host_ip }}"
-    host_group: "{{ host_group | default('lxc') }}"
   tasks:
     - name: Add host to inventory file
-      lineinfile:
-        path: /root/homelab/inventories/hosts.yml
-        insertafter: "^    {{ host_group }}:\n      hosts:"
-        line: "        {{ host_name }}:\n          ansible_host: {{ host_ip }}"
-        state: present
+      shell: |
+        python3 << 'PYEOF'
+        import yaml
 
-    - name: Show updated inventory
-      shell: cat /root/homelab/inventories/hosts.yml
-      register: inventory
+        with open('/root/homelab/inventories/hosts.yml', 'r') as f:
+            inv = yaml.safe_load(f)
 
-    - name: Display inventory
+        group = "{{ host_group | default('lxc') }}"
+        name = "{{ host_name }}"
+        ip = "{{ host_ip }}"
+
+        inv['all']['children'][group]['hosts'][name] = {'ansible_host': ip}
+
+        with open('/root/homelab/inventories/hosts.yml', 'w') as f:
+            yaml.dump(inv, f, default_flow_style=False)
+
+        print(f"Added {name} ({ip}) to group {group}")
+        PYEOF
+
+    - name: Show confirmation
+      shell: grep -A2 "{{ host_name }}" /root/homelab/inventories/hosts.yml
+      register: result
+
+    - name: Display result
       debug:
-        msg: "{{ inventory.stdout_lines }}"
+        msg: "{{ result.stdout_lines }}"
