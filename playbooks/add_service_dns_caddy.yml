@@ -1,0 +1,51 @@
+---
+- name: Add service DNS rewrite and Caddy reverse proxy
+  hosts: ansible-01
+  become: true
+  vars:
+    service_name: "{{ service_name }}"
+    service_ip: "{{ service_ip }}"
+    service_port: "{{ service_port }}"
+    domain: "{{ service_name }}.home.arpa"
+  tasks:
+    - name: Add DNS rewrite to AdGuard primary
+      uri:
+        url: "http://10.20.0.50/control/rewrite/add"
+        method: POST
+        user: admin
+        password: "{{ adguard_primary_password }}"
+        force_basic_auth: yes
+        body_format: json
+        body:
+          domain: "{{ domain }}"
+          answer: "10.20.0.200"
+        status_code: 200
+
+    - name: Add DNS rewrite to AdGuard backup
+      uri:
+        url: "http://10.20.0.51/control/rewrite/add"
+        method: POST
+        user: admin
+        password: "{{ adguard_backup_password }}"
+        force_basic_auth: yes
+        body_format: json
+        body:
+          domain: "{{ domain }}"
+          answer: "10.20.0.200"
+        status_code: 200
+
+    - name: Add Caddy reverse proxy entry
+      blockinfile:
+        path: /opt/caddy/Caddyfile
+        marker: "# {mark} {{ service_name }}"
+        block: |
+          {{ domain }} {
+              reverse_proxy {{ service_ip }}:{{ service_port }}
+          }
+      delegate_to: "{{ groups['lxc'] | select('match', 'caddy') | first }}"
+
+    - name: Restart Caddy
+      shell: docker compose restart
+      args:
+        chdir: /opt/caddy
+      delegate_to: "{{ groups['lxc'] | select('match', 'caddy') | first }}"
