@@ -1,6 +1,6 @@
 ---
 - name: Push Nessus scanner public key to all hosts
-  hosts: all:!nessus
+  hosts: "all:!nessus:!homeassistant"
   become: true
   vars:
     nessus_pub_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIItbwYAjTTX2WczPdKeX2GFlXxXPvoe9TwVxnBemfiEn nessus-scanner"
