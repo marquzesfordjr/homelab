@@ -1,0 +1,162 @@
+---
+- name: Bootstrap host
+  hosts: "{{ target }}"
+  become: true
+  vars:
+    host_type: "{{ host_type | default('ct') }}"
+  tasks:
+    - name: Update packages (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        upgrade: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Update packages (RHEL)
+      dnf:
+        name: "*"
+        state: latest
+      when: ansible_os_family == "RedHat"
+
+    - name: Install essential packages (Debian/Ubuntu)
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - sudo
+          - openssh-server
+          - ca-certificates
+          - python3
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Install essential packages (RHEL)
+      dnf:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - sudo
+          - openssh-server
+          - python3
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Set login banner
+      copy:
+        dest: /etc/issue.net
+        content: |
+          *******************************************************************************
+          *                                                                             *
+          *   ██╗  ██╗ ██████╗ ███╗   ███╗███████╗██╗      █████╗ ██████╗            *
+          *   ██║  ██║██╔═══██╗████╗ ████║██╔════╝██║     ██╔══██╗██╔══██╗           *
+          *   ███████║██║   ██║██╔████╔██║█████╗  ██║     ███████║██████╔╝           *
+          *   ██╔══██║██║   ██║██║╚██╔╝██║██╔══╝  ██║     ██╔══██║██╔══██╗           *
+          *   ██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗███████╗██║  ██║██████╔╝           *
+          *   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝           *
+          *                                                                             *
+          *******************************************************************************
+          *                                                                             *
+          *                        AUTHORIZED ACCESS ONLY                              *
+          *          All activity is monitored, logged and reported.                   *
+          *        Unauthorized access is strictly prohibited by law.                  *
+          *                                                                             *
+          *******************************************************************************
+        mode: '0644'
+
+    - name: Set banner in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Banner'
+        line: 'Banner /etc/issue.net'
+        state: present
+
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Create sudoers.d if missing
+      file:
+        path: /etc/sudoers.d
+        state: directory
+        mode: '0755'
+
+    - name: Create nessus user
+      user:
+        name: nessus
+        shell: /bin/bash
+        create_home: yes
+        state: present
+
+    - name: Add nessus to sudoers
+      copy:
+        dest: /etc/sudoers.d/nessus
+        content: "nessus ALL=(ALL) NOPASSWD: ALL\n"
+        mode: '0440'
+
+    - name: Create nessus .ssh directory
+      file:
+        path: /home/nessus/.ssh
+        state: directory
+        owner: nessus
+        group: nessus
+        mode: '0700'
+
+    - name: Add Nessus scanner public key
+      authorized_key:
+        user: nessus
+        key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIItbwYAjTTX2WczPdKeX2GFlXxXPvoe9TwVxnBemfiEn nessus-scanner"
+        state: present
+
+    # CT specific — add keys to root
+    - name: Add keys to root (CT)
+      authorized_key:
+        user: root
+        key: "{{ item }}"
+        state: present
+      loop:
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIACB3zcXXhp66RvqHj6vOPvPrIEm4Sj3dA9n34NhMwM8 root@ansible-01"
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook-firewall"
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL4+kPTzIwsNkph/+OLyzyx/enk4fllGRmZVVC+d5JWD marquzes@DESKTOP-QV1BM7J"
+      when: host_type == "ct"
+
+    # VM specific — add keys to ansible_user and set sudoers
+    - name: Add keys to user (VM)
+      authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ item }}"
+        state: present
+      loop:
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIACB3zcXXhp66RvqHj6vOPvPrIEm4Sj3dA9n34NhMwM8 root@ansible-01"
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook-firewall"
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL4+kPTzIwsNkph/+OLyzyx/enk4fllGRmZVVC+d5JWD marquzes@DESKTOP-QV1BM7J"
+      when: host_type == "vm"
+
+    - name: Add VM user to sudoers NOPASSWD
+      copy:
+        dest: /etc/sudoers.d/ansible_user
+        content: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL\n"
+        mode: '0440'
+      when: host_type == "vm"
+
+    - name: Fix SELinux context (RHEL VM only)
+      shell: restorecon -Rv /home/{{ ansible_user }}/.ssh
+      when: host_type == "vm" and ansible_os_family == "RedHat"
+      ignore_errors: yes
+
+    - name: Restart SSH (Debian/Ubuntu)
+      service:
+        name: ssh
+        state: restarted
+      when: ansible_os_family == "Debian"
+
+    - name: Restart SSH (RHEL)
+      service:
+        name: sshd
+        state: restarted
+      when: ansible_os_family == "RedHat"
