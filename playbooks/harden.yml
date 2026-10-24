@@ -126,16 +126,16 @@
         line: 'Banner /etc/issue.net'
         state: present
 
-    # ─── KERNEL / NETWORK HARDENING ───────────────────────────
-    - name: Apply sysctl hardening and performance tuning
+    # ─── NETWORK HARDENING (works on all hosts) ───────────────
+    - name: Apply network sysctl settings
       sysctl:
         name: "{{ item.key }}"
         value: "{{ item.value }}"
         state: present
         reload: yes
         ignoreerrors: yes
+      ignore_errors: yes
       loop:
-        # Network hardening
         - { key: 'net.ipv4.tcp_syncookies', value: '1' }
         - { key: 'net.ipv4.conf.all.accept_redirects', value: '0' }
         - { key: 'net.ipv4.conf.default.accept_redirects', value: '0' }
@@ -145,14 +145,24 @@
         - { key: 'net.ipv4.icmp_echo_ignore_broadcasts', value: '1' }
         - { key: 'net.ipv4.icmp_ignore_bogus_error_responses', value: '1' }
         - { key: 'net.ipv6.conf.all.accept_redirects', value: '0' }
-        # Performance tuning
-        - { key: 'vm.swappiness', value: '10' }
         - { key: 'net.core.somaxconn', value: '65535' }
         - { key: 'net.ipv4.tcp_max_syn_backlog', value: '65535' }
         - { key: 'net.core.netdev_max_backlog', value: '5000' }
         - { key: 'net.ipv4.tcp_rmem', value: '4096 87380 16777216' }
         - { key: 'net.ipv4.tcp_wmem', value: '4096 65536 16777216' }
+
+    # ─── PERFORMANCE TUNING (bare metal/VM only) ──────────────
+    - name: Apply performance sysctl settings
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      ignore_errors: yes
+      loop:
+        - { key: 'vm.swappiness', value: '10' }
         - { key: 'fs.file-max', value: '2097152' }
+      when: ansible_virtualization_type != "lxc"
 
     # ─── SYSTEM HARDENING ─────────────────────────────────────
     - name: Set umask in /etc/profile
