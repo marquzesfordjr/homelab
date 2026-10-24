@@ -1,0 +1,192 @@
+---
+- name: Harden all hosts
+  hosts: "all:!homeassistant"
+  become: true
+  tasks:
+
+    # ─── BANNER ───────────────────────────────────────────────
+    - name: Push login banner
+      copy:
+        dest: /etc/issue.net
+        content: |
+          *******************************************************************************
+          *                                                                             *
+          *   ██╗  ██╗ ██████╗ ███╗   ███╗███████╗██╗      █████╗ ██████╗            *
+          *   ██║  ██║██╔═══██╗████╗ ████║██╔════╝██║     ██╔══██╗██╔══██╗           *
+          *   ███████║██║   ██║██╔████╔██║█████╗  ██║     ███████║██████╔╝           *
+          *   ██╔══██║██║   ██║██║╚██╔╝██║██╔══╝  ██║     ██╔══██║██╔══██╗           *
+          *   ██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗███████╗██║  ██║██████╔╝           *
+          *   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝           *
+          *                                                                             *
+          *******************************************************************************
+          *                                                                             *
+          *                        AUTHORIZED ACCESS ONLY                              *
+          *          All activity is monitored, logged and reported.                   *
+          *        Unauthorized access is strictly prohibited by law.                  *
+          *                                                                             *
+          *******************************************************************************
+        mode: '0644'
+
+    # ─── SSH HARDENING ────────────────────────────────────────
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Disable challenge response authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?ChallengeResponseAuthentication'
+        line: 'ChallengeResponseAuthentication no'
+        state: present
+
+    - name: Disable PAM authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?UsePAM'
+        line: 'UsePAM no'
+        state: present
+
+    - name: Set PermitRootLogin to key only
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin prohibit-password'
+        state: present
+
+    - name: Disable empty passwords
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitEmptyPasswords'
+        line: 'PermitEmptyPasswords no'
+        state: present
+
+    - name: Set max auth tries
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?MaxAuthTries'
+        line: 'MaxAuthTries 3'
+        state: present
+
+    - name: Set login grace time
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?LoginGraceTime'
+        line: 'LoginGraceTime 30'
+        state: present
+
+    - name: Set idle timeout
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?ClientAliveInterval'
+        line: 'ClientAliveInterval 900'
+        state: present
+
+    - name: Set max alive count
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?ClientAliveCountMax'
+        line: 'ClientAliveCountMax 0'
+        state: present
+
+    - name: Disable X11 forwarding
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?X11Forwarding'
+        line: 'X11Forwarding no'
+        state: present
+
+    - name: Disable agent forwarding
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?AllowAgentForwarding'
+        line: 'AllowAgentForwarding no'
+        state: present
+
+    - name: Set strong ciphers
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Ciphers'
+        line: 'Ciphers aes256-gcm@openssh.com,aes128-gcm@openssh.com,chacha20-poly1305@openssh.com'
+        state: present
+
+    - name: Set strong MACs
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?MACs'
+        line: 'MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com'
+        state: present
+
+    - name: Enable banner in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Banner'
+        line: 'Banner /etc/issue.net'
+        state: present
+
+    # ─── KERNEL / NETWORK HARDENING ───────────────────────────
+    - name: Apply sysctl hardening and performance tuning
+      sysctl:
+        name: "{{ item.key }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+        ignoreerrors: yes
+      loop:
+        # Network hardening
+        - { key: 'net.ipv4.tcp_syncookies', value: '1' }
+        - { key: 'net.ipv4.conf.all.accept_redirects', value: '0' }
+        - { key: 'net.ipv4.conf.default.accept_redirects', value: '0' }
+        - { key: 'net.ipv4.conf.all.send_redirects', value: '0' }
+        - { key: 'net.ipv4.conf.all.rp_filter', value: '1' }
+        - { key: 'net.ipv4.conf.default.rp_filter', value: '1' }
+        - { key: 'net.ipv4.icmp_echo_ignore_broadcasts', value: '1' }
+        - { key: 'net.ipv4.icmp_ignore_bogus_error_responses', value: '1' }
+        - { key: 'net.ipv6.conf.all.accept_redirects', value: '0' }
+        # Performance tuning
+        - { key: 'vm.swappiness', value: '10' }
+        - { key: 'net.core.somaxconn', value: '65535' }
+        - { key: 'net.ipv4.tcp_max_syn_backlog', value: '65535' }
+        - { key: 'net.core.netdev_max_backlog', value: '5000' }
+        - { key: 'net.ipv4.tcp_rmem', value: '4096 87380 16777216' }
+        - { key: 'net.ipv4.tcp_wmem', value: '4096 65536 16777216' }
+        - { key: 'fs.file-max', value: '2097152' }
+
+    # ─── SYSTEM HARDENING ─────────────────────────────────────
+    - name: Set umask in /etc/profile
+      lineinfile:
+        path: /etc/profile
+        regexp: '^umask'
+        line: 'umask 027'
+        state: present
+
+    - name: Set hard file descriptor limits
+      pam_limits:
+        domain: '*'
+        limit_type: hard
+        limit_item: nofile
+        value: '65535'
+      ignore_errors: yes
+
+    - name: Set soft file descriptor limits
+      pam_limits:
+        domain: '*'
+        limit_type: soft
+        limit_item: nofile
+        value: '65535'
+      ignore_errors: yes
+
+    # ─── RESTART SSH ──────────────────────────────────────────
+    - name: Restart SSH (Debian/Ubuntu)
+      service:
+        name: ssh
+        state: restarted
+      when: ansible_os_family == "Debian"
+
+    - name: Restart SSH (RHEL)
+      service:
+        name: sshd
+        state: restarted
+      when: ansible_os_family == "RedHat"
