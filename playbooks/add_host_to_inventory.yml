@@ -1,0 +1,23 @@
+---
+- name: Add host to inventory
+  hosts: ansible-01
+  become: true
+  vars:
+    host_name: "{{ host_name }}"
+    host_ip: "{{ host_ip }}"
+    host_group: "{{ host_group | default('lxc') }}"
+  tasks:
+    - name: Add host to inventory file
+      lineinfile:
+        path: /root/homelab/inventories/hosts.yml
+        insertafter: "^    {{ host_group }}:\n      hosts:"
+        line: "        {{ host_name }}:\n          ansible_host: {{ host_ip }}"
+        state: present
+
+    - name: Show updated inventory
+      shell: cat /root/homelab/inventories/hosts.yml
+      register: inventory
+
+    - name: Display inventory
+      debug:
+        msg: "{{ inventory.stdout_lines }}"
