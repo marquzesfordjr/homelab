@@ -16,7 +16,7 @@
       ignore_errors: yes
 
     - name: Git commit
-      shell: git commit -m "Auto-sync {{ ansible_date_time.iso8601 }}"
+      shell: "git commit -m 'Auto-sync {{ ansible_date_time.iso8601 }}'"
       args:
         chdir: /root/homelab
       when: git_diff.rc != 0
