@@ -1,0 +1,45 @@
+---
+- name: Deploy AdGuard Home Sync
+  hosts: ansible-01
+  become: true
+  tasks:
+    - name: Create adguard-sync directory
+      file:
+        path: /opt/adguard-sync
+        state: directory
+
+    - name: Create config file
+      copy:
+        dest: /opt/adguard-sync/config.yaml
+        content: |
+          origin:
+            url: http://10.20.0.50
+            username: admin
+            password: YOUR_PRIMARY_ADGUARD_PASSWORD
+
+          replica1:
+            url: http://10.20.0.51
+            username: admin
+            password: YOUR_BACKUP_ADGUARD_PASSWORD
+
+          cron: "0 */6 * * *"
+          runOnStart: true
+
+    - name: Create docker-compose file
+      copy:
+        dest: /opt/adguard-sync/docker-compose.yml
+        content: |
+          services:
+            adguardhome-sync:
+              image: lscr.io/linuxserver/adguardhome-sync:latest
+              container_name: adguardhome-sync
+              restart: unless-stopped
+              volumes:
+                - /opt/adguard-sync/config.yaml:/config/adguardhome-sync.yaml
+              ports:
+                - 8082:8080
+
+    - name: Start adguard-sync
+      shell: docker compose up -d
+      args:
+        chdir: /opt/adguard-sync

@@ -1,0 +1,33 @@
+---
+- name: Deploy Glance Agent on Proxmox nodes
+  hosts: proxmox
+  become: true
+  tasks:
+    - name: Remove old incorrect binary
+      file:
+        path: /usr/local/bin/glance-agent
+        state: absent
+
+    - name: Create agent directory
+      file:
+        path: /opt/glance-agent
+        state: directory
+
+    - name: Download official Glance agent binary
+      shell: |
+        curl -L https://github.com/glanceapp/agent/releases/latest/download/agent-linux-amd64.tar.gz -o /tmp/glance-agent.tar.gz
+        tar -xzf /tmp/glance-agent.tar.gz -C /opt/glance-agent
+        chmod +x /opt/glance-agent/agent
+        rm /tmp/glance-agent.tar.gz
+
+    - name: Install as systemd service
+      shell: /opt/glance-agent/agent install
+      args:
+        creates: /etc/systemd/system/glance-agent.service
+
+    - name: Start glance-agent
+      systemd:
+        name: glance-agent
+        enabled: yes
+        state: started
+        daemon_reload: yes

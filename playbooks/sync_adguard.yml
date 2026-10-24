@@ -1,0 +1,21 @@
+---
+- name: Sync AdGuard Primary to Backup
+  hosts: ansible-01
+  become: true
+  tasks:
+    - name: Restart adguardhome-sync to trigger sync
+      shell: docker restart adguardhome-sync
+      args:
+        chdir: /opt/adguard-sync
+
+    - name: Wait for sync to complete
+      pause:
+        seconds: 10
+
+    - name: Show sync logs
+      shell: docker logs adguardhome-sync --tail 20
+      register: sync_logs
+
+    - name: Display logs
+      debug:
+        msg: "{{ sync_logs.stdout_lines }}"

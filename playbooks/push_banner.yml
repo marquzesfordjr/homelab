@@ -1,0 +1,38 @@
+---
+- name: Push login banner to all hosts
+  hosts: all:!homeassistant
+  become: true
+  tasks:
+    - name: Push banner file
+      copy:
+        dest: /etc/issue.net
+        content: |
+          *******************************************************************************
+          *                                                                             *
+          *   ██╗  ██╗ ██████╗ ███╗   ███╗███████╗██╗      █████╗ ██████╗            *
+          *   ██║  ██║██╔═══██╗████╗ ████║██╔════╝██║     ██╔══██╗██╔══██╗           *
+          *   ███████║██║   ██║██╔████╔██║█████╗  ██║     ███████║██████╔╝           *
+          *   ██╔══██║██║   ██║██║╚██╔╝██║██╔══╝  ██║     ██╔══██║██╔══██╗           *
+          *   ██║  ██║╚██████╔╝██║ ╚═╝ ██║███████╗███████╗██║  ██║██████╔╝           *
+          *   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝           *
+          *                                                                             *
+          *******************************************************************************
+          *                                                                             *
+          *                        AUTHORIZED ACCESS ONLY                              *
+          *          All activity is monitored, logged and reported.                   *
+          *        Unauthorized access is strictly prohibited by law.                  *
+          *                                                                             *
+          *******************************************************************************
+        mode: '0644'
+
+    - name: Set banner in sshd_config
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Banner'
+        line: 'Banner /etc/issue.net'
+        state: present
+
+    - name: Restart SSH service
+      service:
+        name: ssh
+        state: restarted

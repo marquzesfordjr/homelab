@@ -1,0 +1,34 @@
+---
+- name: Fix Glance Agent service
+  hosts: proxmox
+  become: true
+  tasks:
+    - name: Stop and disable old service
+      systemd:
+        name: glance-agent
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Update systemd service file
+      copy:
+        dest: /etc/systemd/system/glance-agent.service
+        content: |
+          [Unit]
+          Description=Glance Agent
+          After=network.target
+
+          [Service]
+          ExecStart=/opt/glance-agent/agent
+          Restart=always
+          RestartSec=5
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload and restart
+      systemd:
+        name: glance-agent
+        enabled: yes
+        state: restarted
+        daemon_reload: yes

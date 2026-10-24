@@ -1,0 +1,47 @@
+---
+- name: Deploy Semaphore
+  hosts: semaphore
+  become: true
+  tasks:
+    - name: Create semaphore directory
+      file:
+        path: /opt/semaphore
+        state: directory
+
+    - name: Deploy docker-compose
+      copy:
+        dest: /opt/semaphore/docker-compose.yml
+        content: |
+          services:
+            mysql:
+              image: mysql:8.0
+              container_name: semaphore-mysql
+              restart: unless-stopped
+              environment:
+                - MYSQL_RANDOM_ROOT_PASSWORD=yes
+                - MYSQL_DATABASE=semaphore
+                - MYSQL_USER=semaphore
+                - MYSQL_PASSWORD=semaphore_db_pass
+              volumes:
+                - /opt/semaphore/mysql:/var/lib/mysql
+
+            semaphore:
+              image: semaphoreui/semaphore:latest
+              container_name: semaphore
+              restart: unless-stopped
+              ports:
+                - 3000:3000
+              environment:
+                - SEMAPHORE_DB_USER=semaphore
+                - SEMAPHORE_DB_PASS=semaphore_db_pass
+                - SEMAPHORE_DB_HOST=mysql
+                - SEMAPHORE_DB_PORT=3306
+                - SEMAPHORE_DB_DIALECT=mysql
+                - SEMAPHORE_DB=semaphore
+                - SEMAPHORE_ADMIN=admin
+                - SEMAPHORE_ADMIN_PASSWORD=password
+                - SEMAPHORE_ADMIN_NAME=Admin
+                - SEMAPHORE_ADMIN_EMAIL=admin@home.arpa
+                - SEMAPHORE_ACCESS_KEY_ENCRYPTION=YourEncryptionKeyHere
+              depends_on:
+                - mysql
