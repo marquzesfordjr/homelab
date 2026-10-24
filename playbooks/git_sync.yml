@@ -1,0 +1,33 @@
+---
+- name: Sync homelab repo to GitHub
+  hosts: ansible-01
+  become: true
+  tasks:
+    - name: Git add all changes
+      shell: git add -A
+      args:
+        chdir: /root/homelab
+
+    - name: Check if there are changes to commit
+      shell: git diff --cached --quiet
+      args:
+        chdir: /root/homelab
+      register: git_diff
+      ignore_errors: yes
+
+    - name: Git commit
+      shell: git commit -m "Auto-sync {{ ansible_date_time.iso8601 }}"
+      args:
+        chdir: /root/homelab
+      when: git_diff.rc != 0
+
+    - name: Git push
+      shell: git push origin main
+      args:
+        chdir: /root/homelab
+      when: git_diff.rc != 0
+
+    - name: Nothing to sync
+      debug:
+        msg: "Nothing to commit - repo is up to date"
+      when: git_diff.rc == 0
