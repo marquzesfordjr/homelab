@@ -1,0 +1,34 @@
+---
+- name: Deploy Rackula
+  hosts: semaphore
+  become: true
+  tasks:
+    - name: Create rackula directory
+      file:
+        path: /opt/rackula
+        state: directory
+
+    - name: Create data directory owned by UID 1001
+      file:
+        path: /opt/rackula/data
+        state: directory
+        owner: "1001"
+        group: "1001"
+
+    - name: Download official persistent compose file
+      command: curl -fsSL https://raw.githubusercontent.com/RackulaLives/Rackula/main/deploy/docker-compose.persist.yml -o /opt/rackula/docker-compose.yml
+
+    - name: Start Rackula
+      command: docker compose up -d
+      args:
+        chdir: /opt/rackula
+
+    - name: Show container status
+      command: docker compose ps
+      args:
+        chdir: /opt/rackula
+      register: rackula_ps
+
+    - name: Display status
+      debug:
+        msg: "{{ rackula_ps.stdout_lines }}"

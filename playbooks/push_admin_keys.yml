@@ -1,0 +1,14 @@
+---
+- name: Push admin SSH public keys to all hosts
+  hosts: "all:!homeassistant"
+  become: true
+  vars:
+    admin_ssh_keys:
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook"
+  tasks:
+    - name: Authorize admin keys
+      authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ item }}"
+        state: present
+      loop: "{{ admin_ssh_keys }}"

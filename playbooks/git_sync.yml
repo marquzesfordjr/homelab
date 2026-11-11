@@ -3,7 +3,7 @@
   hosts: ansible-01
   become: true
   vars:
-    commit_message: "{{ commit_message | default('Auto-sync') }}"
+    msg_text: "{{ commit_message | default('Auto-sync') }}"
   tasks:
     - name: Git add all changes
       shell: git add -A
@@ -17,7 +17,7 @@
       register: git_status
 
     - name: Git commit
-      shell: "git commit -m '{{ commit_message }}'"
+      shell: "git commit -m {{ msg_text | quote }}"
       args:
         chdir: /root/homelab
       when: git_status.stdout != ""

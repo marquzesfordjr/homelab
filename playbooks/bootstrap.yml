@@ -121,7 +121,7 @@
         state: present
       loop:
         - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIACB3zcXXhp66RvqHj6vOPvPrIEm4Sj3dA9n34NhMwM8 root@ansible-01"
-        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook-firewall"
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook"
         - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL4+kPTzIwsNkph/+OLyzyx/enk4fllGRmZVVC+d5JWD marquzes@DESKTOP-QV1BM7J"
       when: host_type == "ct"
 
@@ -133,7 +133,7 @@
         state: present
       loop:
         - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIACB3zcXXhp66RvqHj6vOPvPrIEm4Sj3dA9n34NhMwM8 root@ansible-01"
-        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook-firewall"
+        - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFj5+V/pzEC/wZsGpmxd2VfDNLQnjQXc8ds7dhsjiH80 macbook"
         - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIL4+kPTzIwsNkph/+OLyzyx/enk4fllGRmZVVC+d5JWD marquzes@DESKTOP-QV1BM7J"
       when: host_type == "vm"
 
